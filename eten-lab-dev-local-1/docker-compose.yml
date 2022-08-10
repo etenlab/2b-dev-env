@@ -1,0 +1,89 @@
+version: "3.8"
+
+networks:
+    par_net:
+        ipam:
+            driver: default
+            config:
+                - subnet: 10.3.0.0/24
+                
+services:
+  db:
+    container_name: postgres_1
+    networks:
+      par_net:
+          ipv4_address: 10.3.0.10
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: asdfasdf
+      POSTGRES_DB: eil_db_1
+    ports:
+      - "5432:5432"
+
+  pgadmin:
+    container_name: pgadmin4_1
+    networks:
+      par_net:
+        ipv4_address: 10.3.0.2
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@eten.bible
+      PGADMIN_DEFAULT_PASSWORD: asdfasdf
+    ports:
+      - 5050:80
+    depends_on:
+      - db
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.0.1
+    networks:
+      par_net:
+        ipv4_address: 10.3.0.3
+    container_name: zookeeper_1
+    restart: always
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  broker:
+    image: confluentinc/cp-kafka:7.0.1
+    networks:
+      par_net:
+        ipv4_address: 10.3.0.4
+    container_name: broker_1
+    ports:
+    # To learn about configuring Kafka for access across networks see
+    # https://www.confluent.io/blog/kafka-client-cannot-connect-to-broker-on-aws-on-docker-etc/
+      - 9092:9092
+      - 9997:9997
+    depends_on:
+      - zookeeper
+    restart: always
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://broker:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      JMX_PORT: 9997
+      KAFKA_JMX_OPTS: -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=kafka0 -Dcom.sun.management.jmxremote.rmi.port=9997
+
+  magic:
+    container_name: magic_1
+    image: digitsy/kafka-magic
+    networks:
+      par_net:
+        ipv4_address: 10.3.0.5
+    depends_on:
+      - broker
+    ports:
+      - "8079:80"
+    restart: always
+    environment:
+      KMAGIC_ALLOW_TOPIC_DELETE: "true"
+      KMAGIC_ALLOW_SCHEMA_DELETE: "true"
