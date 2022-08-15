@@ -1,10 +1,18 @@
 ---
 version: '2'
-services:
+networks:
+  par_net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.1.0.0/16
 
-  postgres1:
-    container_name: postgres_1
+services:
+  postgres_1:
     image: postgres
+    networks:
+      par_net:
+        ipv4_address: 10.1.0.2
     restart: always
     environment:
       POSTGRES_USER: postgres
@@ -14,8 +22,10 @@ services:
       - "5432:5432"
 
   pgadmin:
-    container_name: pgadmin4_1
     image: dpage/pgadmin4
+    networks:
+      par_net:
+        ipv4_address: 10.1.0.3
     restart: always
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@eten.bible
@@ -23,11 +33,13 @@ services:
     ports:
       - 5050:80
     depends_on:
-      - postgres1
+      - postgres_1
 
   kafka-ui:
-    container_name: kafka-ui
     image: provectuslabs/kafka-ui:latest
+    networks:
+      par_net:
+        ipv4_address: 10.1.0.4
     restart: always
     ports:
       - 8080:8080
@@ -56,6 +68,9 @@ services:
 
   zookeeper0:
     image: confluentinc/cp-zookeeper:5.2.4
+    networks:
+      par_net:
+        ipv4_address: 10.1.0.5
     restart: always
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
@@ -65,6 +80,9 @@ services:
 
   kafka0:
     image: confluentinc/cp-kafka:5.3.1
+    networks:
+      par_net:
+        ipv4_address: 10.1.0.6
     restart: always
     depends_on:
       - zookeeper0
@@ -83,6 +101,9 @@ services:
 
   zookeeper1:
     image: confluentinc/cp-zookeeper:5.2.4
+    networks:
+      par_net:
+        ipv4_address: 10.1.0.7
     restart: always
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
@@ -90,6 +111,9 @@ services:
 
   kafka1:
     image: confluentinc/cp-kafka:5.3.1
+    networks:
+      par_net:
+        ipv4_address: 10.1.0.8
     restart: always
     depends_on:
       - zookeeper1
@@ -108,6 +132,9 @@ services:
 
   schemaregistry0:
     image: confluentinc/cp-schema-registry:5.5.0
+    networks:
+      par_net:
+        ipv4_address: 10.1.0.9
     restart: always
     ports:
       - 8085:8085
@@ -120,13 +147,15 @@ services:
       SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: PLAINTEXT
       SCHEMA_REGISTRY_HOST_NAME: schemaregistry0
       SCHEMA_REGISTRY_LISTENERS: http://schemaregistry0:8085
-
       SCHEMA_REGISTRY_SCHEMA_REGISTRY_INTER_INSTANCE_PROTOCOL: "http"
       SCHEMA_REGISTRY_LOG4J_ROOT_LOGLEVEL: INFO
       SCHEMA_REGISTRY_KAFKASTORE_TOPIC: _schemas
 
   schemaregistry1:
     image: confluentinc/cp-schema-registry:5.5.0
+    networks:
+      par_net:
+        ipv4_address: 10.1.0.10
     restart: always
     ports:
       - 18085:8085
@@ -139,13 +168,15 @@ services:
       SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: PLAINTEXT
       SCHEMA_REGISTRY_HOST_NAME: schemaregistry1
       SCHEMA_REGISTRY_LISTENERS: http://schemaregistry1:8085
-
       SCHEMA_REGISTRY_SCHEMA_REGISTRY_INTER_INSTANCE_PROTOCOL: "http"
       SCHEMA_REGISTRY_LOG4J_ROOT_LOGLEVEL: INFO
       SCHEMA_REGISTRY_KAFKASTORE_TOPIC: _schemas
 
   kafka-connect0:
     image: confluentinc/cp-kafka-connect:6.0.1
+    networks:
+      par_net:
+        ipv4_address: 10.1.0.11
     restart: always
     ports:
       - 8083:8083
@@ -169,3 +200,44 @@ services:
       CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect0
       CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components"
+
+  2b-authentication-api:
+    image: etenlab/2b-authentication-api
+    networks:
+      par_net:
+        ipv4_address: 10.1.0.13
+    ports:
+      - 8090:8090
+    depends_on:
+      - kafka0
+      - postgres_1
+    environment:
+      HOSTNAME: localhost
+      KAFKA_BOOTSTRAP: kafka1:29092
+      DB_DOMAIN: postgres_1
+      DB_USERNAME: postgres
+      DB_DATABASE: eil_db_1
+      DB_PASSWORD: asdfasdf
+
+      JWT_SECRET: asdfasdf
+      AWS_ACCESS_KEY_ID: asdf
+      AWS_SECRET_ACCESS_KEY: asdf
+      S3_URL_PREFIX=: asdf
+
+  2b-dataset-api-iso-639-2:
+    image: etenlab/2b-dataset-api-iso-639-2
+    networks:
+      par_net:
+        ipv4_address: 10.1.0.12
+    ports:
+      - 8091:8091
+    depends_on:
+      - kafka0
+      - postgres_1
+    environment:
+      HOSTNAME: localhost
+      KAFKA_BOOTSTRAP: kafka1:29092
+      DB_DOMAIN: postgres_1
+      DB_USERNAME: postgres
+      DB_DATABASE: eil_db_1
+      DB_PASSWORD: asdfasdf
