@@ -222,7 +222,7 @@ services:
       JWT_SECRET: asdfasdf
       AWS_ACCESS_KEY_ID: asdf
       AWS_SECRET_ACCESS_KEY: asdf
-      S3_URL_PREFIX=: asdf
+      S3_URL_PREFIX: asdf
 
   2b-dataset-api-iso-639-2:
     image: etenlab/2b-dataset-api-iso-639-2
