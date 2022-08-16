@@ -35,37 +35,6 @@ services:
     depends_on:
       - postgres_1
 
-  kafka-ui:
-    image: provectuslabs/kafka-ui:latest
-    networks:
-      par_net:
-        ipv4_address: 10.1.0.4
-    restart: always
-    ports:
-      - 8080:8080
-    depends_on:
-      - zookeeper0
-      - zookeeper1
-      - kafka0
-      - kafka1
-      - schemaregistry0
-      - kafka-connect0
-    environment:
-      KAFKA_CLUSTERS_0_NAME: local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka0:29092
-      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper0:2181
-      KAFKA_CLUSTERS_0_JMXPORT: 9997
-      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schemaregistry0:8085
-      KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: first
-      KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://kafka-connect0:8083
-      KAFKA_CLUSTERS_1_NAME: secondLocal
-      KAFKA_CLUSTERS_1_BOOTSTRAPSERVERS: kafka1:29092
-      KAFKA_CLUSTERS_1_ZOOKEEPER: zookeeper1:2181
-      KAFKA_CLUSTERS_1_JMXPORT: 9998
-      KAFKA_CLUSTERS_1_SCHEMAREGISTRY: http://schemaregistry1:8085
-      KAFKA_CLUSTERS_1_KAFKACONNECT_0_NAME: first
-      KAFKA_CLUSTERS_1_KAFKACONNECT_0_ADDRESS: http://kafka-connect0:8083
-
   zookeeper0:
     image: confluentinc/cp-zookeeper:5.2.4
     networks:
@@ -77,6 +46,16 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     ports:
       - 2181:2181
+
+  zookeeper1:
+    image: confluentinc/cp-zookeeper:5.2.4
+    networks:
+      par_net:
+        ipv4_address: 10.1.0.7
+    restart: always
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
 
   kafka0:
     image: confluentinc/cp-kafka:5.3.1
@@ -99,16 +78,6 @@ services:
       JMX_PORT: 9997
       KAFKA_JMX_OPTS: -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=kafka0 -Dcom.sun.management.jmxremote.rmi.port=9997
 
-  zookeeper1:
-    image: confluentinc/cp-zookeeper:5.2.4
-    networks:
-      par_net:
-        ipv4_address: 10.1.0.7
-    restart: always
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-
   kafka1:
     image: confluentinc/cp-kafka:5.3.1
     networks:
@@ -123,7 +92,7 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper1:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:29092,PLAINTEXT_HOST://localhost:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:29092,PLAINTEXT_HOST://localhost:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
@@ -201,24 +170,55 @@ services:
       CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect0
       CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components"
 
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    networks:
+      par_net:
+        ipv4_address: 10.1.0.4
+    restart: always
+    ports:
+      - 8080:8080
+    depends_on:
+      - zookeeper0
+      - zookeeper1
+      - kafka0
+      - kafka1
+      - schemaregistry0
+      - kafka-connect0
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka0:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper0:2181
+      KAFKA_CLUSTERS_0_JMXPORT: 9997
+      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schemaregistry0:8085
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: first
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://kafka-connect0:8083
+      KAFKA_CLUSTERS_1_NAME: secondLocal
+      KAFKA_CLUSTERS_1_BOOTSTRAPSERVERS: kafka1:29092
+      KAFKA_CLUSTERS_1_ZOOKEEPER: zookeeper1:2181
+      KAFKA_CLUSTERS_1_JMXPORT: 9998
+      KAFKA_CLUSTERS_1_SCHEMAREGISTRY: http://schemaregistry1:8085
+      KAFKA_CLUSTERS_1_KAFKACONNECT_0_NAME: first
+      KAFKA_CLUSTERS_1_KAFKACONNECT_0_ADDRESS: http://kafka-connect0:8083
+
   2b-authentication-api:
     image: etenlab/2b-authentication-api
     networks:
       par_net:
         ipv4_address: 10.1.0.13
+    restart: always
     ports:
       - 8090:8090
     depends_on:
-      - kafka0
+      - kafka-ui
       - postgres_1
     environment:
       HOSTNAME: localhost
-      KAFKA_BOOTSTRAP: kafka1:29092
+      KAFKA_BOOTSTRAP: kafka0:29092
       DB_DOMAIN: postgres_1
       DB_USERNAME: postgres
       DB_DATABASE: eil_db_1
       DB_PASSWORD: asdfasdf
-
       JWT_SECRET: asdfasdf
       AWS_ACCESS_KEY_ID: asdf
       AWS_SECRET_ACCESS_KEY: asdf
@@ -229,14 +229,34 @@ services:
     networks:
       par_net:
         ipv4_address: 10.1.0.12
+    restart: always
     ports:
       - 8091:8091
     depends_on:
-      - kafka0
+      - kafka-ui
       - postgres_1
     environment:
       HOSTNAME: localhost
-      KAFKA_BOOTSTRAP: kafka1:29092
+      KAFKA_BOOTSTRAP: kafka0:29092
+      DB_DOMAIN: postgres_1
+      DB_USERNAME: postgres
+      DB_DATABASE: eil_db_1
+      DB_PASSWORD: asdfasdf
+
+  2b-database-api:
+    image: etenlab/2b-database-api
+    networks:
+      par_net:
+        ipv4_address: 10.1.0.14
+    restart: always
+    ports:
+      - 8094:8094
+    depends_on:
+      - kafka-ui
+      - postgres_1
+    environment:
+      HOSTNAME: localhost
+      KAFKA_BOOTSTRAP: kafka0:29092
       DB_DOMAIN: postgres_1
       DB_USERNAME: postgres
       DB_DATABASE: eil_db_1
