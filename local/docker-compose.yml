@@ -12,7 +12,7 @@ services:
     image: postgres
     networks:
       par_net:
-        ipv4_address: 10.1.0.2
+        ipv4_address: 10.1.1.2
     restart: always
     environment:
       POSTGRES_USER: postgres
@@ -25,13 +25,13 @@ services:
     image: dpage/pgadmin4
     networks:
       par_net:
-        ipv4_address: 10.1.0.3
+        ipv4_address: 10.1.1.4
     restart: always
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@eten.bible
+      PGADMIN_DEFAULT_EMAIL: admin@etenlab.com
       PGADMIN_DEFAULT_PASSWORD: asdfasdf
     ports:
-      - 5050:80
+      - 8104:80
     depends_on:
       - postgres_1
 
@@ -39,39 +39,41 @@ services:
     image: confluentinc/cp-zookeeper:5.2.4
     networks:
       par_net:
-        ipv4_address: 10.1.0.5
+        ipv4_address: 10.1.1.5
     restart: always
     environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_CLIENT_PORT: 8105
       ZOOKEEPER_TICK_TIME: 2000
     ports:
-      - 2181:2181
+      - 8105:8105
 
   zookeeper1:
     image: confluentinc/cp-zookeeper:5.2.4
     networks:
       par_net:
-        ipv4_address: 10.1.0.7
+        ipv4_address: 10.1.1.6
     restart: always
     environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_CLIENT_PORT: 8106
       ZOOKEEPER_TICK_TIME: 2000
+    ports: 
+      - 8106:8106
 
   kafka0:
     image: confluentinc/cp-kafka:5.3.1
     networks:
       par_net:
-        ipv4_address: 10.1.0.6
+        ipv4_address: 10.1.1.7
     restart: always
     depends_on:
       - zookeeper0
     ports:
-      - 9092:9092
+      - 8107:8107
       - 9997:9997
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper0:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka0:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper0:8105
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka0:29092,PLAINTEXT_HOST://localhost:8107
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
@@ -82,17 +84,17 @@ services:
     image: confluentinc/cp-kafka:5.3.1
     networks:
       par_net:
-        ipv4_address: 10.1.0.8
+        ipv4_address: 10.1.1.8
     restart: always
     depends_on:
       - zookeeper1
     ports:
-      - 9093:9093
+      - 8108:8108
       - 9998:9998
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper1:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper1:8106
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:29092,PLAINTEXT_HOST://localhost:8108
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
@@ -103,19 +105,19 @@ services:
     image: confluentinc/cp-schema-registry:5.5.0
     networks:
       par_net:
-        ipv4_address: 10.1.0.9
+        ipv4_address: 10.1.1.9
     restart: always
     ports:
-      - 8085:8085
+      - 8109:8109
     depends_on:
       - zookeeper0
       - kafka0
     environment:
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka0:29092
-      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: zookeeper0:2181
+      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: zookeeper0:8105
       SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: PLAINTEXT
       SCHEMA_REGISTRY_HOST_NAME: schemaregistry0
-      SCHEMA_REGISTRY_LISTENERS: http://schemaregistry0:8085
+      SCHEMA_REGISTRY_LISTENERS: http://schemaregistry0:8109
       SCHEMA_REGISTRY_SCHEMA_REGISTRY_INTER_INSTANCE_PROTOCOL: "http"
       SCHEMA_REGISTRY_LOG4J_ROOT_LOGLEVEL: INFO
       SCHEMA_REGISTRY_KAFKASTORE_TOPIC: _schemas
@@ -124,19 +126,19 @@ services:
     image: confluentinc/cp-schema-registry:5.5.0
     networks:
       par_net:
-        ipv4_address: 10.1.0.10
+        ipv4_address: 10.1.1.10
     restart: always
     ports:
-      - 18085:8085
+      - 8110:8110
     depends_on:
       - zookeeper1
       - kafka1
     environment:
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka1:29092
-      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: zookeeper1:2181
+      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: zookeeper1:8106
       SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: PLAINTEXT
       SCHEMA_REGISTRY_HOST_NAME: schemaregistry1
-      SCHEMA_REGISTRY_LISTENERS: http://schemaregistry1:8085
+      SCHEMA_REGISTRY_LISTENERS: http://schemaregistry1:8110
       SCHEMA_REGISTRY_SCHEMA_REGISTRY_INTER_INSTANCE_PROTOCOL: "http"
       SCHEMA_REGISTRY_LOG4J_ROOT_LOGLEVEL: INFO
       SCHEMA_REGISTRY_KAFKASTORE_TOPIC: _schemas
@@ -145,10 +147,10 @@ services:
     image: confluentinc/cp-kafka-connect:6.0.1
     networks:
       par_net:
-        ipv4_address: 10.1.0.11
+        ipv4_address: 10.1.1.11
     restart: always
     ports:
-      - 8083:8083
+      - 8111:8111
     depends_on:
       - kafka0
       - schemaregistry0
@@ -162,9 +164,9 @@ services:
       CONNECT_STATUS_STORAGE_TOPIC: _connect_status
       CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
       CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
-      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://schemaregistry0:8085
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://schemaregistry0:8106
       CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.storage.StringConverter
-      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schemaregistry0:8085
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schemaregistry0:8106
       CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect0
@@ -174,10 +176,10 @@ services:
     image: provectuslabs/kafka-ui:latest
     networks:
       par_net:
-        ipv4_address: 10.1.0.4
+        ipv4_address: 10.1.1.12
     restart: always
     ports:
-      - 8080:8080
+      - 8112:8080
     depends_on:
       - zookeeper0
       - zookeeper1
@@ -188,66 +190,24 @@ services:
     environment:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka0:29092
-      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper0:2181
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper0:8105
       KAFKA_CLUSTERS_0_JMXPORT: 9997
-      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schemaregistry0:8085
+      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schemaregistry0:8109
       KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: first
-      KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://kafka-connect0:8083
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://kafka-connect0:8111
       KAFKA_CLUSTERS_1_NAME: secondLocal
       KAFKA_CLUSTERS_1_BOOTSTRAPSERVERS: kafka1:29092
-      KAFKA_CLUSTERS_1_ZOOKEEPER: zookeeper1:2181
+      KAFKA_CLUSTERS_1_ZOOKEEPER: zookeeper1:8106
       KAFKA_CLUSTERS_1_JMXPORT: 9998
-      KAFKA_CLUSTERS_1_SCHEMAREGISTRY: http://schemaregistry1:8085
+      KAFKA_CLUSTERS_1_SCHEMAREGISTRY: http://schemaregistry1:8110
       KAFKA_CLUSTERS_1_KAFKACONNECT_0_NAME: first
-      KAFKA_CLUSTERS_1_KAFKACONNECT_0_ADDRESS: http://kafka-connect0:8083
+      KAFKA_CLUSTERS_1_KAFKACONNECT_0_ADDRESS: http://kafka-connect0:8111
 
-  2b-authentication-api:
-    image: etenlab/2b-authentication-api
+  database-api:
+    image: etenlab/database-api
     networks:
       par_net:
-        ipv4_address: 10.1.0.13
-    restart: always
-    ports:
-      - 8090:8090
-    depends_on:
-      - kafka-ui
-      - postgres_1
-    environment:
-      HOSTNAME: localhost
-      KAFKA_BOOTSTRAP: kafka0:29092
-      DB_DOMAIN: postgres_1
-      DB_USERNAME: postgres
-      DB_DATABASE: eil_db_1
-      DB_PASSWORD: asdfasdf
-      JWT_SECRET: asdfasdf
-      AWS_ACCESS_KEY_ID: asdf
-      AWS_SECRET_ACCESS_KEY: asdf
-      S3_URL_PREFIX: asdf
-
-  2b-dataset-api-iso-639-2:
-    image: etenlab/2b-dataset-api-iso-639-2
-    networks:
-      par_net:
-        ipv4_address: 10.1.0.12
-    restart: always
-    ports:
-      - 8091:8091
-    depends_on:
-      - kafka-ui
-      - postgres_1
-    environment:
-      HOSTNAME: localhost
-      KAFKA_BOOTSTRAP: kafka0:29092
-      DB_DOMAIN: postgres_1
-      DB_USERNAME: postgres
-      DB_DATABASE: eil_db_1
-      DB_PASSWORD: asdfasdf
-
-  2b-database-api:
-    image: etenlab/2b-database-api
-    networks:
-      par_net:
-        ipv4_address: 10.1.0.14
+        ipv4_address: 10.1.1.3
     restart: always
     ports:
       - 8094:8094
@@ -261,3 +221,44 @@ services:
       DB_USERNAME: postgres
       DB_DATABASE: eil_db_1
       DB_PASSWORD: asdfasdf
+
+  authentication-api:
+    image: etenlab/authentication-api
+    networks:
+      par_net:
+        ipv4_address: 10.1.2.2
+    restart: always
+    ports:
+      - 8202:8202
+    depends_on:
+      - database-api
+    environment:
+      HOSTNAME: localhost
+      KAFKA_BOOTSTRAP: kafka0:29092
+      DB_DOMAIN: postgres_1
+      DB_USERNAME: postgres
+      DB_DATABASE: eil_db_1
+      DB_PASSWORD: asdfasdf
+      JWT_SECRET: asdfasdf
+      AWS_ACCESS_KEY_ID: asdf
+      AWS_SECRET_ACCESS_KEY: asdf
+      S3_URL_PREFIX: asdf
+
+  dataset-api-iso-639-2:
+    image: etenlab/iso-639-2-api
+    networks:
+      par_net:
+        ipv4_address: 10.1.3.2
+    restart: always
+    ports:
+      - 8302:8302
+    depends_on:
+      - database-api
+    environment:
+      HOSTNAME: localhost
+      KAFKA_BOOTSTRAP: kafka0:29092
+      DB_DOMAIN: postgres_1
+      DB_USERNAME: postgres
+      DB_DATABASE: eil_db_1
+      DB_PASSWORD: asdfasdf
+
