@@ -1,6 +1,6 @@
-# 2B Developer Environment 1
+# Developer Environment 1
 
-Setup files for the development environment for projects under objective 2B
+Setup files for the development environment using all the services
 
 ## Kotlin projects
 
