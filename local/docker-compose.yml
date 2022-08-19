@@ -213,7 +213,7 @@ services:
     ports:
       - 8103:8103
     depends_on:
-      - kafka-ui
+      # - kafka-ui
       - postgres_1
     environment:
       HOSTNAME: localhost
