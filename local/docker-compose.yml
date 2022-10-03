@@ -1,5 +1,5 @@
 ---
-version: '2'
+version: "2"
 networks:
   par_net:
     ipam:
@@ -10,6 +10,7 @@ networks:
 services:
   postgres_1:
     image: postgres
+    container_name: postgres-db
     networks:
       par_net:
         ipv4_address: 10.1.1.2
@@ -18,6 +19,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: asdfasdf
       POSTGRES_DB: eil_db_1
+      # POSTGRES_MULTIPLE_DATABASES: eil_db_1, keycloak
     ports:
       - "5432:5432"
 
@@ -32,6 +34,33 @@ services:
       PGADMIN_DEFAULT_PASSWORD: asdfasdf
     ports:
       - 8104:80
+    depends_on:
+      - postgres_1
+  # As mutliple database creation not working through yml, create a database named keycloak through pgadmin and then run docker-compose up
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    networks:
+      par_net:
+        ipv4_address: 10.1.1.5
+    restart: on-failure
+    links:
+      - postgres_1
+    environment:
+      KC_DB: postgres
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: asdfasdf
+      KC_DB_SCHEMA: public
+      KC_DB_URL_DATABASE: keycloak
+      KC_DB_URL_HOST: 10.1.1.2
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    # Uncomment the line below if you want to specify JDBC parameters. The parameter below is just an example, and it shouldn't be used in production without knowledge. It is highly recommended that you read the PostgreSQL JDBC driver documentation in order to use it.
+    #JDBC_PARAMS: "ssl=true"
+    ports:
+      - 8080:8080
+    command:
+      - start-dev
+      - --features admin-fine-grained-authz
     depends_on:
       - postgres_1
 
@@ -56,7 +85,7 @@ services:
   #   environment:
   #     ZOOKEEPER_CLIENT_PORT: 8106
   #     ZOOKEEPER_TICK_TIME: 2000
-  #   ports: 
+  #   ports:
   #     - 8106:8106
 
   # kafka0:
@@ -199,67 +228,67 @@ services:
   #     KAFKA_CLUSTERS_1_NAME: secondLocal
   #     KAFKA_CLUSTERS_1_BOOTSTRAPSERVERS: kafka1:29092
   #     KAFKA_CLUSTERS_1_ZOOKEEPER: zookeeper1:8106
+
   #     KAFKA_CLUSTERS_1_JMXPORT: 9998
   #     KAFKA_CLUSTERS_1_SCHEMAREGISTRY: http://schemaregistry1:8110
   #     KAFKA_CLUSTERS_1_KAFKACONNECT_0_NAME: first
   #     KAFKA_CLUSTERS_1_KAFKACONNECT_0_ADDRESS: http://kafka-connect0:8111
 
-  database-api:
-    image: etenlab/database-api
-    networks:
-      par_net:
-        ipv4_address: 10.1.1.3
-    restart: always
-    ports:
-      - 8103:8103
-    depends_on:
-      # - kafka-ui
-      - postgres_1
-    environment:
-      HOSTNAME: localhost
-      KAFKA_BOOTSTRAP: kafka0:29092
-      DB_DOMAIN: postgres_1
-      DB_USERNAME: postgres
-      DB_DATABASE: eil_db_1
-      DB_PASSWORD: asdfasdf
+  # database-api:
+  #   image: etenlab/database-api
+  #   networks:
+  #     par_net:
+  #       ipv4_address: 10.1.1.3
+  #   restart: always
+  #   ports:
+  #     - 8103:8103
+  #   depends_on:
+  #     # - kafka-ui
+  #     - postgres_1
+  #   environment:
+  #     HOSTNAME: localhost
+  #     KAFKA_BOOTSTRAP: kafka0:29092
+  #     DB_DOMAIN: postgres_1
+  #     DB_USERNAME: postgres
+  #     DB_DATABASE: eil_db_1
+  #     DB_PASSWORD: asdfasdf
 
-  authentication-api:
-    image: etenlab/authentication-api
-    networks:
-      par_net:
-        ipv4_address: 10.1.2.2
-    restart: always
-    ports:
-      - 8202:8202
-    depends_on:
-      - database-api
-    environment:
-      HOSTNAME: localhost
-      KAFKA_BOOTSTRAP: kafka0:29092
-      DB_DOMAIN: postgres_1
-      DB_USERNAME: postgres
-      DB_DATABASE: eil_db_1
-      DB_PASSWORD: asdfasdf
-      JWT_SECRET: asdfasdf
-      AWS_ACCESS_KEY_ID: asdf
-      AWS_SECRET_ACCESS_KEY: asdf
-      S3_URL_PREFIX: asdf
+  # authentication-api:
+  #   image: etenlab/authentication-api
+  #   networks:
+  #     par_net:
+  #       ipv4_address: 10.1.2.2
+  #   restart: always
+  #   ports:
+  #     - 8202:8202
+  #   depends_on:
+  #     - database-api
+  #   environment:
+  #     HOSTNAME: localhost
+  #     KAFKA_BOOTSTRAP: kafka0:29092
+  #     DB_DOMAIN: postgres_1
+  #     DB_USERNAME: postgres
+  #     DB_DATABASE: eil_db_1
+  #     DB_PASSWORD: asdfasdf
+  #     JWT_SECRET: asdfasdf
+  #     AWS_ACCESS_KEY_ID: asdf
+  #     AWS_SECRET_ACCESS_KEY: asdf
+  #     S3_URL_PREFIX: asdf
 
-  dataset-api-iso-639-2:
-    image: etenlab/iso-639-2-api
-    networks:
-      par_net:
-        ipv4_address: 10.1.3.2
-    restart: always
-    ports:
-      - 8302:8302
-    depends_on:
-      - database-api
-    environment:
-      HOSTNAME: localhost
-      KAFKA_BOOTSTRAP: kafka0:29092
-      DB_DOMAIN: postgres_1
-      DB_USERNAME: postgres
-      DB_DATABASE: eil_db_1
-      DB_PASSWORD: asdfasdf
-
+  # dataset-api-iso-639-2:
+  #   image: etenlab/iso-639-2-api
+  #   networks:
+  #     par_net:
+  #       ipv4_address: 10.1.3.2
+  #   restart: always
+  #   ports:
+  #     - 8302:8302
+  #   depends_on:
+  #     - database-api
+  #   environment:
+  #     HOSTNAME: localhost
+  #     KAFKA_BOOTSTRAP: kafka0:29092
+  #     DB_DOMAIN: postgres_1
+  #     DB_USERNAME: postgres
+  #     DB_DATABASE: eil_db_1
+  #     DB_PASSWORD: asdfasdf
