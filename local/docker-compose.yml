@@ -9,7 +9,7 @@ networks:
 
 services:
   postgres_1:
-    image: postgres
+    image: postgres:14.5
     container_name: postgres-db
     networks:
       par_net:
@@ -22,6 +22,13 @@ services:
       # POSTGRES_MULTIPLE_DATABASES: eil_db_1, keycloak
     ports:
       - "5432:5432"
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+      - ./init-database.sh:/docker-entrypoint-initdb.d/init-database.sh
+    # volumes:
+    #   - ./postgres-data:/var/lib/postgresql/data
+    #   # copy the sql script to create tables
+    #   - ./sql/create_keycloak_db.sql:/docker-entrypoint-initdb.d/create_keycloak_db.sql
 
   pgadmin:
     image: dpage/pgadmin4
@@ -50,7 +57,7 @@ services:
       KC_DB_USERNAME: postgres
       KC_DB_PASSWORD: asdfasdf
       KC_DB_SCHEMA: public
-      KC_DB_URL_DATABASE: keycloak
+      KC_DB_URL_DATABASE: keycloak_db
       KC_DB_URL_HOST: 10.1.1.2
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
