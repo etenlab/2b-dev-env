@@ -13,15 +13,14 @@ services:
     container_name: postgres-db
     networks:
       par_net:
-        ipv4_address: 10.1.1.2
+        ipv4_address: ${DB_HOST}
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: asdfasdf
-      POSTGRES_DB: eil_db_1
-      # POSTGRES_MULTIPLE_DATABASES: eil_db_1, keycloak
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_EIL_DATABASE}
     ports:
-      - "5432:5432"
+      - ${DB_PORT}:${DB_PORT}
     volumes:
       - ./postgres:/var/lib/postgresql/data
       - ./init-database.sh:/docker-entrypoint-initdb.d/init-database.sh
@@ -34,7 +33,7 @@ services:
     image: dpage/pgadmin4
     networks:
       par_net:
-        ipv4_address: 10.1.1.4
+        ipv4_address: ${IP_ADDRESS_PG}
     restart: always
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@etenlab.com
@@ -49,17 +48,17 @@ services:
     image: quay.io/keycloak/keycloak:latest
     networks:
       par_net:
-        ipv4_address: 10.1.1.5
+        ipv4_address: ${IP_ADDRESS_KC}
     restart: on-failure
     links:
       - postgres_1
     environment:
       KC_DB: postgres
-      KC_DB_USERNAME: postgres
-      KC_DB_PASSWORD: asdfasdf
+      KC_DB_USERNAME: ${DB_USERNAME}
+      KC_DB_PASSWORD: ${DB_PASSWORD}
       KC_DB_SCHEMA: public
-      KC_DB_URL_DATABASE: keycloak_db
-      KC_DB_URL_HOST: 10.1.1.2
+      KC_DB_URL_DATABASE: ${DB_KC_DATABASE}
+      KC_DB_URL_HOST: ${DB_HOST}
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
     # Uncomment the line below if you want to specify JDBC parameters. The parameter below is just an example, and it shouldn't be used in production without knowledge. It is highly recommended that you read the PostgreSQL JDBC driver documentation in order to use it.
@@ -71,11 +70,12 @@ services:
       - --features admin-fine-grained-authz
     depends_on:
       - postgres_1
+
   graphql-engine:
     image: hasura/graphql-engine:v2.13.0
     networks:
       par_net:
-        ipv4_address: 10.1.1.6
+        ipv4_address: ${IP_ADDRESS_HASURA}
     ports:
       - "8081:8080"
     depends_on:
@@ -83,9 +83,9 @@ services:
     restart: always
     environment:
       ## postgres database to store Hasura metadata
-      HASURA_GRAPHQL_METADATA_DATABASE_URL: postgres://postgres:asdfasdf@postgres_1:5432/postgres
+      HASURA_GRAPHQL_METADATA_DATABASE_URL: postgres://${DB_USERNAME}:${DB_PASSWORD}@postgres_1:${DB_PORT}/postgres
       ## this env var can be used to add the above postgres database to Hasura as a data source. this can be removed/updated based on your needs
-      PG_DATABASE_URL: postgres://postgres:asdfasdf@postgres_1:5432/postgres
+      PG_DATABASE_URL: postgres://${DB_USERNAME}:${DB_PASSWORD}@postgres_1:${DB_PORT}/postgres
       ## enable the console served by server
       HASURA_GRAPHQL_ENABLE_CONSOLE: "true" # set to "false" to disable console
       ## enable debugging mode. It is recommended to disable this in production
@@ -95,3 +95,219 @@ services:
       # HASURA_GRAPHQL_CONSOLE_ASSETS_DIR: /srv/console-assets
       ## uncomment next line to set an admin secret
       # HASURA_GRAPHQL_ADMIN_SECRET: myadminsecretkey
+
+  database-api:
+    image: etenlab/database-api:latest
+    networks:
+      par_net:
+        ipv4_address: ${IP_ADDRESS_DATABASE_API}
+    restart: always
+    links:
+      - postgres_1
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_EIL_DATABASE}
+      PORT: ${PORT_DATABASE_API}
+    ports:
+      - ${PORT_DATABASE_API}:${PORT_DATABASE_API}
+    command: npm run start
+    depends_on:
+      - postgres_1
+
+  discussion-api:
+    image: etenlab/discussion-api:latest
+    networks:
+      par_net:
+        ipv4_address: ${IP_ADDRESS_DISCUSSION_API}
+    restart: always
+    links:
+      - postgres_1
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_EIL_DATABASE}
+      PORT: ${PORT_DISCUSSION_API}
+    ports:
+      - ${PORT_DISCUSSION_API}:${PORT_DISCUSSION_API}
+    command: npm run start
+    depends_on:
+      - postgres_1
+      - database-api
+
+  file-api:
+    image: etenlab/file-api:latest
+    networks:
+      par_net:
+        ipv4_address: ${IP_ADDRESS_FILE_API}
+    restart: always
+    links:
+      - postgres_1
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_EIL_DATABASE}
+      AWS_S3_REGION: ${AWS_S3_REGION}
+      AWS_S3_BUCKET_NAME: ${AWS_S3_BUCKET_NAME}
+      AWS_S3_ACCESS_ID: ${AWS_S3_ACCESS_ID}
+      AWS_S3_SECRET_KEY: ${AWS_S3_SECRET_KEY}
+      PORT: ${PORT_FILE_API}
+    ports:
+      - ${PORT_FILE_API}:${PORT_FILE_API}
+    command: npm run start
+    depends_on:
+      - postgres_1
+      - database-api
+
+  notifications-api:
+    image: etenlab/notifications-api:latest
+    networks:
+      par_net:
+        ipv4_address: ${IP_ADDRESS_NOTIFICATIONS_API}
+    restart: always
+    links:
+      - postgres_1
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_EIL_DATABASE}
+      PORT: ${PORT_NOTIFICATIONS_API}
+    ports:
+      - ${PORT_NOTIFICATIONS_API}:${PORT_NOTIFICATIONS_API}
+    command: npm run start
+    depends_on:
+      - postgres_1
+      - database-api
+
+  admin-api:
+    image: etenlab/admin-api:latest
+    networks:
+      par_net:
+        ipv4_address: ${IP_ADDRESS_ADMIN_API}
+    restart: always
+    links:
+      - postgres_1
+    environment:
+      DATABASE_HOST: ${DB_HOST}
+      DATABASE_PORT: ${DB_PORT}
+      KEYCLOAK_URL: ${IP_ADDRESS_KC}:8080
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+      PORT: ${PORT_ADMIN_API}
+    ports:
+      - ${PORT_ADMIN_API}:${PORT_ADMIN_API}
+    command: npm run start
+    depends_on:
+      - postgres_1
+      - database-api
+
+  aggregation-api:
+    image: etenlab/aggregation-api:latest
+    networks:
+      par_net:
+        ipv4_address: ${IP_ADDRESS_AGGREGATION_API}
+    restart: always
+    links:
+      - postgres_1
+    environment:
+      PORT: ${PORT_AGGREGATION_API}
+    ports:
+      - ${PORT_AGGREGATION_API}:${PORT_AGGREGATION_API}
+    command: npm run start
+    depends_on:
+      - postgres_1
+      - database-api
+  
+  data-load-api:
+    image: etenlab/data-load-api:latest
+    networks:
+      par_net:
+        ipv4_address: ${IP_ADDRESS_DATA_LOAD_API}
+    restart: always
+    links:
+      - postgres_1
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_EIL_DATABASE}
+      RUN_MIGRATIONS: false
+      MODE: DEV
+      PORT: ${PORT_DATA_LOAD_API}
+    ports:
+      - ${PORT_DATA_LOAD_API}:${PORT_DATA_LOAD_API}
+    command: npm run start
+    depends_on:
+      - postgres_1
+      - database-api
+
+  oldb-api:
+    image: etenlab/oldb-api:latest
+    networks:
+      par_net:
+        ipv4_address: ${IP_ADDRESS_OLDB_API}
+    restart: always
+    links:
+      - postgres_1
+    environment:
+      PORT: ${PORT_OLDB_API}
+    ports:
+      - ${PORT_OLDB_API}:${PORT_OLDB_API}
+    command: npm run start
+    depends_on:
+      - postgres_1
+      - database-api
+
+  site-text-api:
+    image: etenlab/site-text-api:latest
+    networks:
+      par_net:
+        ipv4_address: ${IP_ADDRESS_SITE_TEXT_API}
+    restart: always
+    links:
+      - postgres_1
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_EIL_DATABASE}
+      PORT: ${PORT_SITE_TEXT_API}
+    ports:
+      - ${PORT_SITE_TEXT_API}:${PORT_SITE_TEXT_API}
+    command: npm run start
+    depends_on:
+      - postgres_1
+      - database-api
+
+  voting-api:
+    image: etenlab/voting-api:latest
+    networks:
+      par_net:
+        ipv4_address: ${IP_ADDRESS_VOTING_API}
+    restart: always
+    links:
+      - postgres_1
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_EIL_DATABASE}
+      PORT: ${PORT_VOTING_API}
+    ports:
+      - ${PORT_VOTING_API}:${PORT_VOTING_API}
+    command: npm run start
+    depends_on:
+      - postgres_1
+      - database-api
