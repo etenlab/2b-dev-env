@@ -72,7 +72,7 @@ services:
       - postgres_1
 
   graphql-engine:
-    image: hasura/graphql-engine:v2.13.0
+    image: hasura/graphql-engine:v2.13.2
     networks:
       par_net:
         ipv4_address: ${IP_ADDRESS_HASURA}
