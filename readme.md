@@ -6,7 +6,3 @@ Setup files for the development environment using all the services
 
 2. Run following command
 ```docker compose --env-file ../.env up -d```
-
-## Kotlin projects
-
-Add/replace the `codeStyles` folder to the `.idea` folder on all Kotlin/Intellij projects. 
