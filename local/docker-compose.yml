@@ -226,7 +226,7 @@ services:
     depends_on:
       - postgres_1
       - database-api
-  
+
   data-load-api:
     image: etenlab/data-load-api:latest
     networks:
