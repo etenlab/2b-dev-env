@@ -226,7 +226,7 @@ services:
     depends_on:
       - postgres_1
       - database-api
-  
+
   data-load-api:
     image: etenlab/data-load-api:latest
     networks:
@@ -241,7 +241,7 @@ services:
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_EIL_DATABASE}
-      RUN_MIGRATIONS: false
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS}
       MODE: DEV
       PORT: ${PORT_DATA_LOAD_API}
     ports:
