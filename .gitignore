@@ -36,3 +36,6 @@ lerna-debug.log*
 .devcontainer
 
 .env
+.DS_Store
+.Trashes
+/local/postgres
