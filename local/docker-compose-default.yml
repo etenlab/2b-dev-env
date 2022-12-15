@@ -176,7 +176,7 @@ services:
       PORT: ${PORT_AGGREGATION_API}
     ports:
       - ${PORT_AGGREGATION_API}:${PORT_AGGREGATION_API}
-    command: npm run start
+    command: npm run start:prod
     depends_on:
       - postgres_db
       - database-api
