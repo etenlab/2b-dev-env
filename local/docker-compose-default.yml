@@ -113,6 +113,23 @@ services:
       - postgres_db
       - database-api
 
+  discussion-subscriptions-api:
+    image: etenlab/discussion-subscriptions-api:latest
+    restart: always
+    environment:
+      DB_HOST: postgres_db
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_EIL_DATABASE}
+      PORT: ${PORT_DISCUSSION_SUBSCRIPTIONS_API}
+    ports:
+      - ${PORT_DISCUSSION_SUBSCRIPTIONS_API}:${PORT_DISCUSSION_SUBSCRIPTIONS_API}
+    command: npm run start
+    depends_on:
+      - postgres_db
+      - database-api
+
   file-api:
     image: etenlab/file-api:latest
     restart: always
@@ -146,6 +163,23 @@ services:
       PORT: ${PORT_NOTIFICATIONS_API}
     ports:
       - ${PORT_NOTIFICATIONS_API}:${PORT_NOTIFICATIONS_API}
+    command: npm run start
+    depends_on:
+      - postgres_db
+      - database-api
+
+  notifications-subscriptions-api:
+    image: etenlab/notifications-subscriptions-api:latest
+    restart: always
+    environment:
+      DB_HOST: postgres_db
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_EIL_DATABASE}
+      PORT: ${PORT_NOTIFICATIONS_SUBSCRIPTIONS_API}
+    ports:
+      - ${PORT_NOTIFICATIONS_SUBSCRIPTIONS_API}:${PORT_NOTIFICATIONS_SUBSCRIPTIONS_API}
     command: npm run start
     depends_on:
       - postgres_db
