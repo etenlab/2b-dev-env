@@ -13,14 +13,6 @@ services:
       POSTGRES_DB: ${DB_EIL_DATABASE}
     ports:
       - ${PORT_DB}:5432
-
-  postgres_kc:
-    image: postgres:14.5
-    restart: always
-    environment:
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_KC_DATABASE}
     volumes:
       # copy the sql script to create tables
       - ${KC_DB_INIT_SCRIPT_PATH}:/docker-entrypoint-initdb.d/init-database.sh
@@ -45,7 +37,7 @@ services:
       KC_DB_PASSWORD: ${DB_PASSWORD}
       KC_DB_SCHEMA: public
       KC_DB_URL_DATABASE: ${DB_KC_DATABASE}
-      KC_DB_URL_HOST: postgres_kc
+      KC_DB_URL_HOST: postgres_db
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
     # Uncomment the line below if you want to specify JDBC parameters. The parameter below is just an example, and it shouldn't be used in production without knowledge. It is highly recommended that you read the PostgreSQL JDBC driver documentation in order to use it.
@@ -92,7 +84,6 @@ services:
       PORT: 80
     ports:
       - ${PORT_DATABASE_API}:80
-    command: npm run start
     depends_on:
       - postgres_db
 
@@ -105,10 +96,25 @@ services:
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_EIL_DATABASE}
-      PORT: ${PORT_DISCUSSION_API}
+      PORT: 80
     ports:
-      - ${PORT_DISCUSSION_API}:${PORT_DISCUSSION_API}
-    command: npm run start
+      - ${PORT_DISCUSSION_API}:80
+    depends_on:
+      - postgres_db
+      - database-api
+
+  discussion-subscriptions-api:
+    image: etenlab/discussion-subscriptions-api:latest
+    restart: always
+    environment:
+      DB_HOST: postgres_db
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_EIL_DATABASE}
+      PORT: 80
+    ports:
+      - ${PORT_DISCUSSION_SUBSCRIPTION_API}:80
     depends_on:
       - postgres_db
       - database-api
@@ -126,10 +132,9 @@ services:
       AWS_S3_BUCKET_NAME: ${AWS_S3_BUCKET_NAME}
       AWS_S3_ACCESS_ID: ${AWS_S3_ACCESS_ID}
       AWS_S3_SECRET_KEY: ${AWS_S3_SECRET_KEY}
-      PORT: ${PORT_FILE_API}
+      PORT: 80
     ports:
-      - ${PORT_FILE_API}:${PORT_FILE_API}
-    command: npm run start
+      - ${PORT_FILE_API}:80
     depends_on:
       - postgres_db
       - database-api
@@ -143,10 +148,25 @@ services:
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_EIL_DATABASE}
-      PORT: ${PORT_NOTIFICATIONS_API}
+      PORT: 80
     ports:
-      - ${PORT_NOTIFICATIONS_API}:${PORT_NOTIFICATIONS_API}
-    command: npm run start
+      - ${PORT_NOTIFICATIONS_API}:80
+    depends_on:
+      - postgres_db
+      - database-api
+
+  notifications-subscriptions-api:
+    image: etenlab/notifications-subscriptions-api:latest
+    restart: always
+    environment:
+      DB_HOST: postgres_db
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_EIL_DATABASE}
+      PORT: 80
+    ports:
+      - ${PORT_NOTIFICATIONS_SUBSCRIPTIONS_API}:80
     depends_on:
       - postgres_db
       - database-api
@@ -161,10 +181,9 @@ services:
       KEYCLOAK_REALM: ${KEYCLOAK_REALM}
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
-      PORT: ${PORT_ADMIN_API}
+      PORT: 80
     ports:
-      - ${PORT_ADMIN_API}:${PORT_ADMIN_API}
-    command: npm run start
+      - ${PORT_ADMIN_API}:80
     depends_on:
       - postgres_db
       - database-api
@@ -173,10 +192,16 @@ services:
     image: etenlab/aggregation-api:latest
     restart: always
     environment:
-      PORT: ${PORT_AGGREGATION_API}
+      NOTIFICATIONS_URL: http://notifications-api:80/graphql
+      DISCUSSIONS_URL: http://discussion-api:80/graphql
+      SUBGRAPH_DISCUSSION_URL: http://discussion-api:80/graphql
+      SUBGRAPH_NOTIFICATION_URL: http://notifications-api:80/graphql
+      SUBGRAPH_SITE_TEXT_URL: http://site-text-api:80/graphql
+      # SUBGRAPH_VOTING_URL: http://172.30.0.22:80/graphql
+      SUBGRAPH_VOTING_URL: http://voting-api:80/graphql
+      PORT: 80
     ports:
-      - ${PORT_AGGREGATION_API}:${PORT_AGGREGATION_API}
-    command: npm run start:prod
+      - ${PORT_AGGREGATION_API}:80
     depends_on:
       - postgres_db
       - database-api
@@ -192,10 +217,9 @@ services:
       DB_NAME: ${DB_EIL_DATABASE}
       RUN_MIGRATIONS: ${RUN_MIGRATIONS}
       MODE: DEV
-      PORT: ${PORT_DATA_LOAD_API}
+      PORT: 80
     ports:
-      - ${PORT_DATA_LOAD_API}:${PORT_DATA_LOAD_API}
-    command: npm run start
+      - ${PORT_DATA_LOAD_API}:80
     depends_on:
       - postgres_db
       - database-api
@@ -204,10 +228,9 @@ services:
     image: etenlab/oldb-api:latest
     restart: always
     environment:
-      PORT: ${PORT_OLDB_API}
+      PORT: 80
     ports:
-      - ${PORT_OLDB_API}:${PORT_OLDB_API}
-    command: npm run start
+      - ${PORT_OLDB_API}:80
     depends_on:
       - postgres_db
       - database-api
@@ -221,10 +244,9 @@ services:
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_EIL_DATABASE}
-      PORT: ${PORT_SITE_TEXT_API}
+      PORT: 80
     ports:
-      - ${PORT_SITE_TEXT_API}:${PORT_SITE_TEXT_API}
-    command: npm run start
+      - ${PORT_SITE_TEXT_API}:80
     depends_on:
       - postgres_db
       - database-api
@@ -238,10 +260,9 @@ services:
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_EIL_DATABASE}
-      PORT: ${PORT_VOTING_API}
+      PORT: 80
     ports:
-      - ${PORT_VOTING_API}:${PORT_VOTING_API}
-    command: npm run start
+      - ${PORT_VOTING_API}:80
     depends_on:
       - postgres_db
       - database-api
