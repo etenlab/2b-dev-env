@@ -114,7 +114,7 @@ services:
       DB_NAME: ${DB_EIL_DATABASE}
       PORT: 80
     ports:
-      - ${PORT_DISCUSSION_SUBSCRIPTION_API}:80
+      - ${PORT_DISCUSSION_SUBSCRIPTIONS_API}:80
     depends_on:
       - postgres_db
       - database-api
