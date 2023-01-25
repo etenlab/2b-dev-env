@@ -266,3 +266,19 @@ services:
     depends_on:
       - postgres
       - database-api
+
+  scripture-api:
+    image: etenlab/scripture-api:latest
+    restart: always
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_EIL_DATABASE}
+      PORT: 80
+    ports:
+      - ${PORT_SCRIPTURE_API}:80
+    depends_on:
+      - postgres
+      - database-api
