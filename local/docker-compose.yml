@@ -176,12 +176,15 @@ services:
     image: etenlab/admin-api:latest
     restart: always
     environment:
-      DATABASE_HOST: postgres
-      DATABASE_PORT: 5432
       KEYCLOAK_URL: keycloak:8080
       KEYCLOAK_REALM: ${KEYCLOAK_REALM}
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: example
+      DB_NAME: eil
       PORT: 80
     ports:
       - ${PORT_ADMIN_API}:80
@@ -199,12 +202,17 @@ services:
       SUBGRAPH_NOTIFICATION_URL: http://notifications-api:80/graphql
       SUBGRAPH_SITE_TEXT_URL: http://site-text-api:80/graphql
       SUBGRAPH_VOTING_URL: http://voting-api:80/graphql
+      SUBGRAPH_SCRIPTURE_URL: http://scripture-api:80/graphql
       PORT: 80
     ports:
       - ${PORT_AGGREGATION_API}:80
     depends_on:
       - postgres
       - database-api
+      - discussion-api
+      - notifications-api
+      - scripture-api
+      - site-text-api
 
   data-load-api:
     image: etenlab/data-load-api:latest
