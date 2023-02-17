@@ -216,6 +216,8 @@ services:
       - notifications-api
       - scripture-api
       - site-text-api
+      - voting-api
+      - oldb-api
 
   data-load-api:
     image: etenlab/data-load-api:latest
