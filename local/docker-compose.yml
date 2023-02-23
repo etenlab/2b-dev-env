@@ -83,8 +83,9 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_EIL_DATABASE}
       KEYCLOAK_URL: http://keycloak:8080
-      KEYCLOAK_CLIENT_ID: showcase-auth
-      CORS_ALLOW_ORIGINS: http://localhost:3000,http://localhost:3001
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_CLIENTS: ${KEYCLOAK_CLIENTS}
+      CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS}
       PORT: 80
     ports:
       - ${PORT_DATABASE_API}:80
