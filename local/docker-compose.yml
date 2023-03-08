@@ -242,6 +242,15 @@ services:
     image: etenlab/oldb-api:latest
     restart: always
     environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_EIL_DATABASE}
+      AIRTABLE_BASE_ID: ${AIRTABLE_BASE_ID}
+      AIRTABLE_API_KEY: ${AIRTABLE_API_KEY}
+      AIRTABLE_TABLE_ID: ${AIRTABLE_TABLE_ID}
+      AIRTABLE_TABLE_NAME: ${AIRTABLE_TABLE_NAME}
       AIRTABLE_TOTAL_RECORDS: ${AIRTABLE_TOTAL_RECORDS}
       PORT: 80
     ports:
