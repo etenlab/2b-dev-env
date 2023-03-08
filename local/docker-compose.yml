@@ -242,6 +242,7 @@ services:
     image: etenlab/oldb-api:latest
     restart: always
     environment:
+      AIRTABLE_TOTAL_RECORDS: ${AIRTABLE_TOTAL_RECORDS}
       PORT: 80
     ports:
       - ${PORT_OLDB_API}:80
