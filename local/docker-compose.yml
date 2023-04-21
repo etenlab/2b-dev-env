@@ -28,7 +28,7 @@ services:
     ports:
       - ${PORT_DB_SSO}:5432
     volumes:
-      - ${PG_SSO_VOLUME_PATH:-./postgres}:/var/lib/postgresql/data
+      - ${PG_SSO_VOLUME_PATH:-./postgres-sso}:/var/lib/postgresql/data
 
   pgadmin:
     image: dpage/pgadmin4
