@@ -14,9 +14,9 @@ services:
     ports:
       - ${PORT_DB}:5432
     volumes:
-      - ${PG_VOLUME_PATH:-./postgres}:/var/lib/postgresql/data
+      - ${PG_VOLUME_PATH:-./postgres}:/var/lib/eilpostgres/data
       # copy the sql script to create tables
-      - ${KC_DB_INIT_SCRIPT_PATH:-./init-database.sh}:/docker-entrypoint-initdb.d/init-database.sh
+      - ${EIL_DB_INIT_SCRIPT_PATH:-./init-eil-database.sh}:/docker-entrypoint-initdb.d/init-database.sh
 
   postgres-sso:
     image: postgres:14.5
@@ -29,6 +29,7 @@ services:
       - ${PORT_DB_SSO}:5432
     volumes:
       - ${PG_SSO_VOLUME_PATH:-./postgres}:/var/lib/postgresql/data
+      - ${KC_DB_INIT_SCRIPT_PATH:-./init-kc-database.sh}:/docker-entrypoint-initdb.d/init-database.sh
 
   pgadmin:
     image: dpage/pgadmin4
@@ -44,6 +45,8 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:latest
     restart: on-failure
+    volumes: 
+      - ./import/realm-showcase.json:/opt/keycloak/data/import/realm.json #${KC_IMPORT_REALM_PATH:-./ealm-showcase.json}:/tmp/realm-showcase.json
     environment:
       KC_DB: postgres
       KC_DB_USERNAME: ${DB_USERNAME}
@@ -58,11 +61,11 @@ services:
     ports:
       - ${PORT_KEYCLOAK}:8080
     command:
-      - start-dev
+      - start-dev # --features admin-fine-grained-authz && import --file  /tmp/import/realm-showcase.json
       - --features admin-fine-grained-authz
+      - --import-realm
     depends_on:
       - postgres-sso
-
   
   cpg-server:
     image: etenlab/cpg-server:latest
