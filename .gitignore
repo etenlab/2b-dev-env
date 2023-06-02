@@ -39,3 +39,4 @@ lerna-debug.log*
 .DS_Store
 .Trashes
 /local/postgres
+/local/postgres-sso
