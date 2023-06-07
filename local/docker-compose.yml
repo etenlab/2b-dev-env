@@ -29,7 +29,8 @@ services:
       - ${PORT_DB_SSO}:5432
     volumes:
       - ${PG_SSO_VOLUME_PATH:-./postgres}:/var/lib/postgresql/data
-      - ${KC_DB_INIT_SCRIPT_PATH:-./init-kc-database.sh}:/docker-entrypoint-initdb.d/init-database.sh
+      # - ${KC_DB_INIT_SCRIPT_PATH:-./init-kc-database.sh}:/docker-entrypoint-initdb.d/init-database.sh
+      - ./sql/keycloak_db.sql:/docker-entrypoint-initdb.d/keycloak_db.sql
 
   pgadmin:
     image: dpage/pgadmin4
@@ -45,8 +46,8 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:latest
     restart: on-failure
-    volumes: 
-      - ./import/realm-showcase.json:/opt/keycloak/data/import/realm.json #${KC_IMPORT_REALM_PATH:-./ealm-showcase.json}:/tmp/realm-showcase.json
+    # volumes: 
+    #  - ./import/realm-showcase.json:/opt/keycloak/data/import/realm.json #${KC_IMPORT_REALM_PATH:-./ealm-showcase.json}:/tmp/realm-showcase.json
     environment:
       KC_DB: postgres
       KC_DB_USERNAME: ${DB_USERNAME}
@@ -63,7 +64,7 @@ services:
     command:
       - start-dev # --features admin-fine-grained-authz && import --file  /tmp/import/realm-showcase.json
       - --features admin-fine-grained-authz
-      - --import-realm
+      # - --import-realm
     depends_on:
       - postgres-sso
   
