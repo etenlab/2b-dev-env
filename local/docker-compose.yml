@@ -46,8 +46,6 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:latest
     restart: on-failure
-    # volumes: 
-    #  - ./import/realm-showcase.json:/opt/keycloak/data/import/realm.json #${KC_IMPORT_REALM_PATH:-./ealm-showcase.json}:/tmp/realm-showcase.json
     environment:
       KC_DB: postgres
       KC_DB_USERNAME: ${DB_USERNAME}
@@ -62,12 +60,10 @@ services:
     ports:
       - ${PORT_KEYCLOAK}:8080
     command:
-      - start-dev # --features admin-fine-grained-authz && import --file  /tmp/import/realm-showcase.json
-      - --features admin-fine-grained-authz
-      # - --import-realm
+      - start-dev --features admin-fine-grained-authz
     depends_on:
       - postgres-sso
-  
+
   cpg-server:
     image: etenlab/cpg-server:latest
     restart: always
